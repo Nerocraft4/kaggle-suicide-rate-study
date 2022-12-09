@@ -13,6 +13,24 @@ import matplotlib.pyplot as plt
 raw = pd.read_csv("../data/master.csv")
 
 ################################################################################
+############################# DATA EXPLORATION #################################
+################################################################################
+# we can start by observing the evolution of the data along time
+year_evo = raw.groupby('year')['suicides/100k pop'].mean().reset_index()
+sns.set_theme()
+plt.plot(year_evo['year'],year_evo['suicides/100k pop'])
+plt.show()
+
+
+#we can also chart the correlation matrix
+corr_matrix = raw.corr()
+sns.heatmap(corr_matrix, annot=True)
+plt.show()
+#since most of our data isn't yet mapped to numbers, we can't really visualize
+#it in our correlation matrix. We'll have to wait a little bit more before
+#noticing relationships between variables.
+
+################################################################################
 ############################ CLEANING / TRIMMING ###############################
 ################################################################################
 # we first trim the dataframe to only our countries of interest.
@@ -89,5 +107,12 @@ wdf['gdp_per_capita ($)'] = wdf['gdp_per_capita ($)']/maxi_gdp
 print(wdf.head(100))
 
 ################################################################################
+############################## FEATURE SELECTION ###############################
 ################################################################################
-################################################################################
+# we can start by calculating the correlation matrix again
+corr_matrix = wdf.corr()
+sns.heatmap(corr_matrix, annot=True)
+plt.show()
+#we can appreciate here that both sex and age are strongly positively correlated
+#with higher suicide rates. we also observe a decent negative correlation
+#between the gpd per capita and the rate of suicides.
