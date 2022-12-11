@@ -20,7 +20,9 @@ We started focusing on visualizing the data and the trends in it at a global / w
 For this part, and after having superficially explored the data  before, we started by removing redundant and useless columns.
 After that, the data was normalized using a min-max linear mapping (the maximum is a 1, the minimum a 0, and anything in between is mapped linearly).
 This allowed us to visualize a correlation matrix and decide what features to focus on.
-Feature selection: tba
+
+## Feature selection
+We first use the pearson correlation matrix alongside a statistic test (t-test) to check if our values are meaningful enough and which ones are the most meaningful to the target.
 
 ## Models
 Remember to also compare to external models (models created by the community)
