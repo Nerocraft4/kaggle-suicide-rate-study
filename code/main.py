@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from ingest_data import ingest
+from clean_data import where_selection, lin_normalize, class_normalize
+from generate_features import corr_feature_selection
 
 #The objective of our study is to analyze the relationships between suicides
 #and other socioeconomic factors accross different countries in Europe (continent)
@@ -10,7 +13,7 @@ import matplotlib.pyplot as plt
 #regions in Europe
 
 #read_data
-raw = pd.read_csv("../data/master.csv")
+raw = ingest("../data/master.csv")
 
 ################################################################################
 ############################# DATA EXPLORATION #################################
@@ -64,7 +67,7 @@ plt.show()
 # we first trim the dataframe to only our countries of interest.
 eur_list = ['Russian Federation','Germany','United Kingdom','France','Italy','Spain','Ukraine','Poland','Romania','Netherlands']
 #this reduces the dataframe from 27820 rows to only 3452 rowss
-raw = raw[raw['country'].isin(eur_list)]
+raw = where_selection(df=raw,column='country',vlist=eur_list,include=True)
 
 #our dependent variable will be the rate of suicides. we'll now determine if any
 #of the columns has any null, and we'll work with the most complete ones
@@ -90,44 +93,25 @@ raw = raw.drop(columns=['country-year','generation'])
 #first, we make a deep copy of our dataframe, to keep the clean data untouched
 wdf = raw.copy()
 
-#let's build a normalization function (import it from other file?)
-#with the year we can just subtract the minimum from all of our entries
-#and then divide by the max value
-def normcolumn(col):
-    mi = np.min(col)
-    ma = np.max(col)-mi
-    return((col-mi)/ma)
+#we will use the lin_normalize function to normalize the following columns:
+#'year','suicides_no','population','suicides/100k pop','HDI for year',
+#' gdp_for_year ($) ','gdp_per_capita ($)'
+cols_to_norm = ['year','suicides_no','population','suicides/100k pop', \
+                'HDI for year',' gdp_for_year ($) ','gdp_per_capita ($)']
+#first, unfortunately, we have to reformat a column due it's comma formatting
+wdf[' gdp_for_year ($) '] = wdf[' gdp_for_year ($) '].apply( \
+                            lambda x: float(x.replace(",","")))
+#now we can apply the linear normalization
+wdf = lin_normalize(df=wdf,columns=cols_to_norm)
 
-#we'll start by normalizing the year
-wdf['year'] = normcolumn(wdf['year'])
+#regarding the sex, we can just use the class_normalize function
+wdf = class_normalize(df=wdf,column='sex',mapping_order=['female','male'])
 
-#regarding the sex, we can just map it to female -> 0, male -> 1
-wdf['sex'] = wdf['sex'].apply(lambda x: 0 if x=='female' else 1)
-
-#for the age column, we'll map the groups as follows:
-age_mapping = {'05-14':10,'15-24':20,'25-34':30,'35-54':45,'55-74':65,'75+':80}
-#after that we'll just normalize
-wdf['age'] = wdf['age'].apply(lambda x: (age_mapping[x.split()[0]]))
-wdf['age'] = normcolumn(wdf['age'])
-
-#now we normalize the suicides_no column
-wdf['suicides_no'] = normcolumn(wdf['suicides_no'])
-
-#now, the population column
-wdf['population'] = normcolumn(wdf['population'])
-
-#after that, it's turn for the suicide rate
-wdf['suicides/100k pop'] = normcolumn(wdf['suicides/100k pop'])
-
-#same thing with the HDI per year
-wdf['HDI for year'] = normcolumn(wdf['HDI for year'])
-
-#the same with the gdp_for_year ($) column
-wdf[' gdp_for_year ($) '] = wdf[' gdp_for_year ($) '].apply(lambda x: float(x.replace(",","")))
-wdf[' gdp_for_year ($) '] = normcolumn(wdf[' gdp_for_year ($) '])
-
-#we will do the same with the gdp per capita
-wdf['gdp_per_capita ($)'] = normcolumn(wdf['gdp_per_capita ($)'] )
+#we can do the same for the age groups
+age_mapping = ['05-14 years','15-24 years','25-34 years','35-54 years',\
+               '55-74 years','75+ years']
+#after that we'll just normalize with the class_normalize function
+wdf = class_normalize(df=wdf,column='age',mapping_order=age_mapping)
 print(wdf)
 
 ################################################################################
@@ -135,6 +119,8 @@ print(wdf)
 ################################################################################
 # we can start by calculating the correlation matrix again
 corr_matrix = wdf.corr()
+corr_feature_selection(df=wdf,corr=corr_matrix,target='suicides/100k pop',
+                       threshold=0.05)
 sns.heatmap(corr_matrix, annot=True)
 plt.title("Correlation matrix with normalized and filtered data")
 plt.show()
