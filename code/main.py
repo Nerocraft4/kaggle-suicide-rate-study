@@ -135,5 +135,6 @@ print(cfs)
 #Let's now try a Lasso feature classification
 print(wdf.columns)
 twdf = wdf.drop(columns=['country','HDI for year'])
-features = lasso_feature_selection(df=twdf,target='suicides/100k pop')
+features = lasso_feature_selection(df=twdf,target='suicides/100k pop', \
+                                   alphas=np.arange(0.005,1,0.005))
 print(wdf.columns)

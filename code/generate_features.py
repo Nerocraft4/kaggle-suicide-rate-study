@@ -59,13 +59,13 @@ def corr_feature_selection(df,corr,target,threshold=0.05):
     corr = corr.drop(columns=['temp'])
     return corr
 
-def lasso_feature_selection(df,target):
+def lasso_feature_selection(df, target, alph):
     X = df.drop(columns=target)
     y = df[target]
     features = X.columns
     X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3)
     pipeline = Pipeline([('scaler',StandardScaler()),('model',Lasso())])
-    search = GridSearchCV(pipeline, {'model__alpha':np.arange(0.005,1,0.005)}, \
+    search = GridSearchCV(pipeline, {'model__alpha': alph}, \
                           cv = 3, scoring="neg_mean_squared_error",verbose=0)
     search.fit(X_train,y_train)
     print(search.best_params_)
