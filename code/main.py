@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from ingest_data import ingest
 from clean_data import where_selection, lin_normalize, class_normalize
-from generate_features import corr_feature_selection
+from generate_features import corr_feature_selection, lasso_feature_selection
 
 #The objective of our study is to analyze the relationships between suicides
 #and other socioeconomic factors accross different countries in Europe (continent)
@@ -119,11 +119,21 @@ print(wdf)
 ################################################################################
 # we can start by calculating the correlation matrix again
 corr_matrix = wdf.corr()
-corr_feature_selection(df=wdf,corr=corr_matrix,target='suicides/100k pop',
-                       threshold=0.05)
 sns.heatmap(corr_matrix, annot=True)
 plt.title("Correlation matrix with normalized and filtered data")
 plt.show()
 #we can appreciate here that both sex and age are strongly positively correlated
 #with higher suicide rates. we also observe a decent negative correlation
 #between the gpd per capita and the rate of suicides, same with the HDI.
+
+#let's now check what features are meaningful following a t-test
+cfs = corr_feature_selection(df=wdf,corr=corr_matrix,target='suicides/100k pop',
+                             threshold=0.005)
+print(cfs)
+#as we can see, all features appear to be meaningful according to the test.
+
+#Let's now try a Lasso feature classification
+print(wdf.columns)
+twdf = wdf.drop(columns=['country','HDI for year'])
+features = lasso_feature_selection(df=twdf,target='suicides/100k pop')
+print(wdf.columns)
