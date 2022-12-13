@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.feature_selection import VarianceThreshold
+
 from ingest_data import ingest
 from clean_data import where_selection, lin_normalize, class_normalize
 from generate_features import corr_feature_selection, lasso_feature_selection
@@ -133,8 +135,55 @@ print(cfs)
 #as we can see, all features appear to be meaningful according to the test.
 
 #Let's now try a Lasso feature classification
-print(wdf.columns)
-twdf = wdf.drop(columns=['country','HDI for year'])
-features = lasso_feature_selection(df=twdf,target='suicides/100k pop', \
-                                   alphas=np.arange(0.005,1,0.005))
-print(wdf.columns)
+X = wdf.drop(columns=['country','HDI for year'])
+features = lasso_feature_selection(df=X,target='suicides/100k pop', \
+                                   alph=np.arange(0.005,1,0.005))
+
+#we can now try with other methods from scikitlearn
+#let's start by removing low-variance features
+selector = VarianceThreshold(threshold=(0.75*(1-0.75)))
+#we'll remove our target variable, and also the country (as it would not make
+#sense to convert it to a number).
+X = wdf.drop(columns=['suicides/100k pop','country'])
+selector.fit_transform(X)
+print(X.columns)
+#we still get the same columns. They all have a decent variance
+
+#we can also try an RFE feature selection
+from sklearn.feature_selection import RFE
+from sklearn.svm import SVR
+X = wdf.drop(columns=['country','HDI for year','suicides/100k pop'])
+y = wdf['suicides/100k pop']
+estimator = SVR(kernel="linear")
+selector = RFE(estimator, n_features_to_select=5, step=1)
+selector = selector.fit(X, y)
+selected = [X.columns[i] for i in range(len(X.columns)) if selector.support_[i]]
+discard = [X.columns[i] for i in range(len(X.columns)) if not selector.support_[i]]
+print("Selected",selected)
+print("Discarded",discard)
+
+#Let's now take a bit of a different approach on studying the HDI. We've
+#seen that it contains nulls, but we still don't know how many. Is it even worth
+#considering?
+#check nans per country
+conts = list(set(list(wdf['country'])))
+nonan = []
+for c in conts:
+    parted = wdf[wdf['country']==c]['HDI for year']
+    parted = parted.apply(lambda x: 1 if pd.notna(x) else 0)
+    nonan.append(sum(parted)/len(parted))
+tdf = pd.DataFrame([conts,nonan]).transpose()
+tdf = tdf.rename(columns={0:'country',1:'no-null ratio'})
+sns.barplot(data=tdf,x='country',y='no-null ratio')
+
+#same for year.
+years = set(raw['year'])
+nonan = []
+for c in years:
+    parted = raw[raw['year']==c]['HDI for year']
+    parted = parted.apply(lambda x: 1 if pd.notna(x) else 0)
+    nonan.append(sum(parted)/len(parted))
+print(years)
+tdf = pd.DataFrame([years,nonan]).transpose()
+tdf = tdf.rename(columns={0:'year',1:'no-null ratio'})
+sns.lineplot(data=tdf,x='year',y='no-null ratio')
