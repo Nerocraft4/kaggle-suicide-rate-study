@@ -23,24 +23,24 @@ def corr_feature_selection(df,corr,target,threshold=0.05):
             for col in corr.columns]
     corr['df'] = lens #degrees of freedom
     #if we don't do it in this order, Panda converts the dataframe to a Series
-    corr = corr[[target,'df']]
-    corr['t-score'] = corr[target]*np.sqrt(corr['df']-2) \
-                      /np.sqrt(1-corr[target]*corr[target])
+    ncorr = corr[[target,'df']]
+    ncorr['t-score'] = ncorr[target]*np.sqrt(ncorr['df']-2) \
+                      /np.sqrt(1-ncorr[target]*ncorr[target])
     #data from
     #https://faculty.washington.edu/heagerty/Books/Biostatistics/TABLES/t-Tables/
     t_values = pd.read_csv("../data/t_table.csv",sep=";")
     ts = []
-    for i in range(len(corr['df'])):
+    for i in range(len(ncorr['df'])):
         #find the proper df
         found = False
-        i = 0
+        j = 0
         l = len(t_values['df'])
         while not found:
-            if corr['df'][i]-2 > t_values['df'][l-i-1]:
-                dfree = t_values['df'][l-i-1]
-                idxfree = l-i-1
+            if ncorr['df'][i]-2 > t_values['df'][l-j-1]:
+                dfree = t_values['df'][l-j-1]
+                idxfree = l-j-1
                 found = True
-            i+=1
+            j+=1
         #find the proper alpha
         found = False
         i = 0
@@ -51,15 +51,25 @@ def corr_feature_selection(df,corr,target,threshold=0.05):
                 found = True
             i+=1
         ts.append(t_values.iloc[idxfree][idxalpha])
-    corr['ts'] = ts
-    corr = corr.drop([target])
-    corr['temp'] = abs(corr['t-score'])
-    corr['accept'] = corr['temp']>corr['ts']
-    corr = corr.sort_values(by='temp',ascending=False)
-    corr = corr.drop(columns=['temp'])
-    return corr
+    ncorr['ts'] = ts
+    ncorr = ncorr.drop([target])
+    ncorr['temp'] = abs(ncorr['t-score'])
+    ncorr['accept'] = ncorr['temp']>ncorr['ts']
+    ncorr = ncorr.sort_values(by='temp',ascending=False)
+    ncorr = ncorr.drop(columns=['temp'])
+    ncorr['df'] = ncorr['df']-1
+    return ncorr
 
 def lasso_feature_selection(df, target, alph):
+    '''
+    The Lasso feature selection, given a dataframe and a target column, returns
+    the accepted features given a certain alpha coefficient.
+
+    :param df: Pandas DataFrame with data in it.
+    :param target: The target feature of our dataset.
+    :param alph: The alpha "correction" coefficient that the Lasso will use.
+    :return: A list with the accepted column names.
+    '''
     X = df.drop(columns=target)
     y = df[target]
     features = X.columns

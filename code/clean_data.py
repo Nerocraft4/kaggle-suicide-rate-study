@@ -20,7 +20,7 @@ def where_selection(df,column,vlist,include=True):
         return df
     if include:
         return(df[df[column].isin(vlist)])
-    return(df[~df[column].isin(vlist)])
+    return(~df[df[column].isin(vlist)])
 
 def lin_normalize(df,columns):
     """
