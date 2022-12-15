@@ -23,8 +23,11 @@ This allowed us to visualize a correlation matrix and decide what features to fo
 
 ## Feature selection
 We first use the Pearson correlation matrix alongside a statistic test (t-test) to check if our values are meaningful enough and which ones are the most meaningful to the target.
+
 We then use a Lasso feature selection, with a range of parameters, to have another approach at our feature importance.
+
 After that we try to discard features which might have low variance, with a Scikit Learn method.
+
 Finally we try yet another approach with the RFE feature selection model (from Scikit Learn too).
 
 ## Models
