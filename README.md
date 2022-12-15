@@ -22,7 +22,7 @@ After that, the data was normalized using a min-max linear mapping (the maximum 
 This allowed us to visualize a correlation matrix and decide what features to focus on.
 
 ## Feature selection
-We first use the pearson correlation matrix alongside a statistic test (t-test) to check if our values are meaningful enough and which ones are the most meaningful to the target.
+We first use the Pearson correlation matrix alongside a statistic test (t-test) to check if our values are meaningful enough and which ones are the most meaningful to the target.
 We then use a Lasso feature selection, with a range of parameters, to have another approach at our feature importance.
 After that we try to discard features which might have low variance, with a Scikit Learn method.
 Finally we try yet another approach with the RFE feature selection model (from Scikit Learn too).
@@ -48,12 +48,16 @@ We have observed some interesting tendencies in some countries:
   - Age seems to be a positive correlating feature for all countries. The Russian Federation, Ukraine, France and Germany have the highest tendencies, while the UK's coefficients fall short from that.
 
 ## Demo
-Explain how to demo
+There are several demo python snippets in the demo folder, where the user can find examples on how to use the author-created functions and tools (the ones I created). They can't be run directly, and will need to be run from the code folder (or change the import path, which would work too).
 
 ## Conclusion
-Talk about our best model and compare it to state of the art / other external models
+In conclusion, the method that performed the best is, by far, the country-isolated Regression. After studying the individual correlations per country, we've seen that the socioeconomic factors are indeed related to the suicide rates, but differently for each country. This is why separating the dataset country-wise bumped up our results that much.
+
+Comparing it to similar studies, it has also been [observed](https://www.kaggle.com/code/chingchunyeh/suicide-rates-overview-1985-to-2016) that indeed socioeconomic factors affect differently each country, and that our most significantly correlated variables (sex and age) are also the ones being observed by other users.
+Sadly, no other user got into the same depth when it comes to feature selection or model evaluation, so there is no way to compare our R^2 score to the community obtained results. Even so, personally, our R^2 is good enough to render the results meaningful, and I think the approach taken is rigorous enough for the scope of the study.
 
 ## Further ideas / investigation
+To further understand how the socioeconomic factors affect each country's suicide rate, it would be interesting to study each and every one of them individually along some historical data (economic crisis, pandemics, wars, etc). That would contextualize our data in a way that would allow us (even with low-decent R^2 values) to make stronger assumptions and learn more concrete insights about this topic.
 
 ## License
 The project has been developed under an MIT license.
