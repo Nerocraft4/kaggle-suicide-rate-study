@@ -187,3 +187,110 @@ print(years)
 tdf = pd.DataFrame([years,nonan]).transpose()
 tdf = tdf.rename(columns={0:'year',1:'no-null ratio'})
 sns.lineplot(data=tdf,x='year',y='no-null ratio')
+
+#We won't be considering the HDI for the next studies
+
+################################################################################
+############################### MODEL LEARNING #################################
+################################################################################
+
+wdf = wdf.drop(columns=['suicides_no','HDI for year',' gdp_for_year ($) '])
+X = wdf.drop(columns = ['suicides/100k pop','country'])
+Y = wdf['suicides/100k pop']
+
+##### Multi linear model
+#we first need to import the necessary functions
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, \
+                                                    random_state=1)
+
+model = LinearRegression()
+model.fit(X_train,y_train)
+
+predictions = model.predict(X_test)
+print("MSE : ", mean_squared_error(y_test, predictions))
+print("MAE : ", mean_absolute_error(y_test, predictions))
+r_squared = model.score(X_test, y_test)
+print("R2 : ", r_squared)
+
+##### Ridge - Tikhonov regularization
+from sklearn.linear_model import Ridge
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, \
+                                                    random_state=12)
+model = Ridge(alpha=1.0)
+model.fit(X_train, y_train)
+#alpha adjustment
+alphas = np.arange(0.001,100,0.1)
+rs = []
+for alpha in alphas:
+    model = Ridge(alpha=alpha)
+    model.fit(X_train, y_train)
+    r_squared = model.score(X_test, y_test)
+    rs.append(r_squared)
+plt.plot(alphas,rs) #we'll get alpha=1 as it is good enough
+
+##### Lasso Regression
+from sklearn import linear_model
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=123)
+model = linear_model.Lasso(alpha=0.001)
+model.fit(X_train, y_train)
+print("R^2",model.score(X_test, y_test))
+print(list(X_train.columns))
+print(model.coef_)
+print(model.intercept_)
+
+#coefficient optimization
+coefs = []
+rsqua = []
+alphs = np.arange(0.06,0.001,-0.0005)
+for alpha in alphs:
+    model = linear_model.Lasso(alpha=alpha)
+    model.fit(X_train, y_train)
+    coefs.append(model.coef_)
+    rsqua.append(model.score(X_test, y_test))
+#transpose coefficients
+coefs = [[row[i] for row in coefs] for i in range(len(coefs[0]))]
+
+plt.plot(alphs,rsqua)
+plt.show()
+
+#plot coefficient evolution
+plt.plot(alphs,coefs[0],label='year')
+plt.plot(alphs,coefs[1],label='sex')
+plt.plot(alphs,coefs[2],label='age')
+plt.plot(alphs,coefs[3],label='population')
+plt.plot(alphs,coefs[4],label='gpd per capita')
+plt.legend()
+plt.show()
+
+#find the best alpha:
+myi = np.argmax(rsqua)
+print("best R^2:", rsqua[myi])
+best_alpha = alphs[myi]
+#transpose again
+coefs = [[row[i] for row in coefs] for i in range(len(coefs[0]))]
+best_coefs = coefs[myi]
+print(best_coefs)
+# R^2 is still low, around 0.50-0.55. How can we make this analysis better?
+
+##### Country-isolated analysis
+rsqua = []
+conts = []
+for country in list(set(list(wdf['country']))):
+    Xi = wdf[wdf['country']==country]
+    X = Xi.drop(columns = ['country','suicides/100k pop'])
+    y = Xi['suicides/100k pop']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, \
+                                                        random_state=12)
+    model = Ridge(alpha=1.0)
+    model.fit(X_train, y_train)
+    r_squared = model.score(X_test, y_test)
+    conts.append(country)
+    rsqua.append(r_squared)
+print(conts)
+print(rsqua)
+print("Average R^2:",np.mean(rsqua),"STD:",np.std(rsqua))
+# New R^2 of 0.76! We now have much more conffidence in our model's predictions.

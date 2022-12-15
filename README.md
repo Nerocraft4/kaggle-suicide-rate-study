@@ -23,9 +23,29 @@ This allowed us to visualize a correlation matrix and decide what features to fo
 
 ## Feature selection
 We first use the pearson correlation matrix alongside a statistic test (t-test) to check if our values are meaningful enough and which ones are the most meaningful to the target.
+We then use a Lasso feature selection, with a range of parameters, to have another approach at our feature importance.
+After that we try to discard features which might have low variance, with a Scikit Learn method.
+Finally we try yet another approach with the RFE feature selection model (from Scikit Learn too).
 
 ## Models
-Remember to also compare to external models (models created by the community)
+#### Multi-Linear Regression
+After using a MLR with Year, Sex, Age, GDP per capita and Population as independent variables, we've achieved an R^2 of around 0.54, which isn't great, but is strong enough for us to take the results into consideration. We've observed the following:
+ - Almost no correlation with the Year
+ - Positive correlation with Sex
+ - Stronger positive correlation with Age
+ - Slightly positive correlation with Population
+ - Slight negative correlation with the GDP per capita
+#### Ridge-Tikhonov Regularization
+We've achieved similar results with the Ridge regularization, with slight differences in the last two coefficients. The correlation with the population seems to be less significant, while the negative correlation with the GDP increases in a 1/100th of a unit. Our R^2 is also of 0.54.
+#### Lasso Regression
+Concerning the Lasso, we first explored what alpha would fit the model best, only to find that alphas over 0.01 were already ruining our model's performance. We found the best alpha (around 0.002) which gave us an R^2 of around 0.50. Still poor results, which did not seem to increase with any model.
+#### Country-isolated study
+After observing the mediocre performance by our models, we decided to change the approach: we would study each country individually, taking into account a personalized model for each case. Doing this, and then taking the average efficiency across our models, we bumped up our performance to an R^2 of almost 0.76 (having a maximum of 0.82, and a minimum of 0.70). The STD was only 0.038, which seemed to be just about right.
+We have observed some interesting tendencies in some countries:
+ - The Russian Federation and Ukraine have suicide rates highly biased by sex, having the highest correlation coefficients for that feature compared to all the other countries.
+  - Again, for the Russian Federation, the GDP seems to highly influence the suicide rate, with a decent negative tendency differing a lot from other countries.
+  - The Population seems to influence each country in a different way. Poland, for example, has a decent positive influence by the Population variable (more population means higher suicide rate) but the contrary happens with France (less population means higher suicide rate).
+  - Age seems to be a positive correlating feature for all countries. The Russian Federation, Ukraine, France and Germany have the highest tendencies, while the UK's coefficients fall short from that.
 
 ## Demo
 Explain how to demo
